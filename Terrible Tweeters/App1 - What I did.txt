@@ -1,0 +1,16 @@
+https://www.youtube.com/watch?v=Lu76c85LhGY
+
+For App 1, I completed the tutorial linked above. The tutorial consists of an angry birds clone:
+
+The bird can be launched, and there are monsters that must be elimanted. The tutorial was very helpful
+with teaching me how to use the Unity game engine and how to traverse through its many features. Additionally, the
+tutorial focused a lot on the programming of the game using C#. 
+
+In terms of what I had personally changed to the game to "make it my own", I added a feature where the player could click anywhere
+on the game while the bird was airborn and the bird would get a boost of added force in the direction it was travelling in. This was
+done by using a coroutine to track the previous position of the bird every 0.25 seconds. Then every update(), if the user clicks
+the primary mouse button, a Vector2 direction is calculated using the birds current direction subtracted by its previous direction
+from the coroutine. 
+
+Additionally I made a small change where the player cannot mouseDrag or mouseDown on the Bird until it has been reset so that the player
+cannot grab the bird while it has already been launched.

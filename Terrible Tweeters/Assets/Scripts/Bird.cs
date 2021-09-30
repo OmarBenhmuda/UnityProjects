@@ -13,7 +13,10 @@ public class Bird : MonoBehaviour
     SpriteRenderer _spriteRenderer;
     private Vector2 _previousPos;
 
-    private float _boostForceMultiplier = 50;
+    private float _boostForceMultiplier = 400;
+
+    private bool _boostAvailable = true;
+    private bool _readyToFly = true;
 
     private void Awake()
     {
@@ -30,44 +33,53 @@ public class Bird : MonoBehaviour
 
     private void OnMouseDown()
     {
-        _spriteRenderer.color = Color.red;
+        if (_readyToFly)
+            _spriteRenderer.color = Color.red;
     }
 
     private void OnMouseUp()
     {
+        if (_readyToFly)
+        {
+            _readyToFly = false;
 
-        _rigidBody2D.isKinematic = false;
+            _rigidBody2D.isKinematic = false;
 
-        _previousPos = _rigidBody2D.position;
+            StartCoroutine(previousPositionTracker());
 
-        Vector2 currentPosition = _rigidBody2D.position;
-        Vector2 direction = _startPosition - currentPosition;
-        direction.Normalize();
+            Vector2 currentPosition = _rigidBody2D.position;
+            Vector2 direction = _startPosition - currentPosition;
+            direction.Normalize();
 
-        _rigidBody2D.AddForce(direction * _launchForce);
+            _rigidBody2D.AddForce(direction * _launchForce);
 
-        _spriteRenderer.color = Color.white;
+            _spriteRenderer.color = Color.white;
+        }
     }
 
     private void OnMouseDrag()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 desiredPosition = mousePos;
-
-        float distance = Vector2.Distance(desiredPosition, _startPosition);
-
-        if (distance > _maxDrag)
+        if (_readyToFly)
         {
-            Vector2 direction = desiredPosition - _startPosition;
-            direction.Normalize();
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 desiredPosition = mousePos;
 
-            desiredPosition = _startPosition + direction * _maxDrag;
+            float distance = Vector2.Distance(desiredPosition, _startPosition);
+
+            if (distance > _maxDrag)
+            {
+                Vector2 direction = desiredPosition - _startPosition;
+                direction.Normalize();
+
+                desiredPosition = _startPosition + direction * _maxDrag;
+            }
+
+            if (desiredPosition.x > _startPosition.x)
+                desiredPosition.x = _startPosition.x;
+
+            _rigidBody2D.position = desiredPosition;
         }
 
-        if (desiredPosition.x > _startPosition.x)
-            desiredPosition.x = _startPosition.x;
-
-        _rigidBody2D.position = desiredPosition;
     }
 
     // Update is called once per frame
@@ -75,22 +87,21 @@ public class Bird : MonoBehaviour
     {
         if (!_rigidBody2D.isKinematic)
         {
+            Vector2 direction = _rigidBody2D.position - _previousPos;
+            direction.Normalize();
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && _boostAvailable)
             {
-                Vector2 direction = _rigidBody2D.position - _previousPos;
                 _rigidBody2D.AddForce(direction * _boostForceMultiplier);
-
+                _boostAvailable = false;
             }
 
         }
-
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         StartCoroutine(ResetAfterDelay());
-
     }
 
     private IEnumerator ResetAfterDelay()
@@ -99,5 +110,17 @@ public class Bird : MonoBehaviour
         _rigidBody2D.position = _startPosition;
         _rigidBody2D.isKinematic = true;
         _rigidBody2D.velocity = Vector2.zero;
+        _boostAvailable = true;
+        _readyToFly = true;
+    }
+
+    private IEnumerator previousPositionTracker()
+    {
+        while (true)
+        {
+            _previousPos = _rigidBody2D.position;
+            yield return new WaitForSeconds(0.25f);
+        }
+
     }
 }
